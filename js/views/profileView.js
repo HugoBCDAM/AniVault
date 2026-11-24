@@ -98,8 +98,11 @@ window.AniVault.views = window.AniVault.views || {};
               </div>
 
               <div>
-                <label class="block text-[11px] font-bold text-outline uppercase mb-1" for="profile-supabase-key">SUPABASE ANON KEY</label>
+                <label class="block text-[11px] font-bold text-outline uppercase mb-1" for="profile-supabase-key">SUPABASE ANON / PUBLIC KEY</label>
                 <input id="profile-supabase-key" type="password" value="${creds.key}" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." class="w-full bg-surface-container px-3 py-2 rounded-xl text-xs font-mono text-on-surface placeholder:text-outline border border-white/5 focus:outline-none focus:bg-surface-container-high"/>
+                <span class="text-[10px] text-on-surface-variant/80 mt-1 block">
+                  Copia la clave <strong class="text-secondary font-mono">anon / public</strong> (empieza por <code>eyJ...</code> o <code>sb_publishable_</code>). <strong>No uses</strong> la <code>sb_secret_...</code> en el navegador.
+                </span>
               </div>
 
               <div class="flex items-center gap-2 mt-1">
@@ -257,6 +260,12 @@ window.AniVault.views = window.AniVault.views || {};
       const testSupabaseBtn = container.querySelector('#btn-test-supabase-conn');
       if (testSupabaseBtn && supabase) {
         testSupabaseBtn.onclick = async () => {
+          const url = (container.querySelector('#profile-supabase-url')?.value || '').trim();
+          const key = (container.querySelector('#profile-supabase-key')?.value || '').trim();
+          if (url && key) {
+            supabase.saveCredentials(url, key);
+          }
+
           testSupabaseBtn.disabled = true;
           testSupabaseBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> Probando...';
           const res = await supabase.testConnection();

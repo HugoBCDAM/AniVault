@@ -34,11 +34,19 @@ create table if not exists public.user_settings (
   updated_at timestamptz default timezone('utc'::text, now())
 );
 
--- 3. Habilitar Seguridad a Nivel de Fila (RLS)
+-- 3. Conceder Permisos a los Roles de la API de Supabase
+grant usage on schema public to anon, authenticated, service_role;
+grant all on table public.animes to anon, authenticated, service_role;
+grant all on table public.user_settings to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+
+-- 4. Habilitar Seguridad a Nivel de Fila (RLS)
 alter table public.animes enable row level security;
 alter table public.user_settings enable row level security;
 
--- 4. Políticas de Acceso para la API Pública (anon key)
+-- 5. Políticas de Acceso para la API Pública (anon key)
 -- Permite lectura pública / de la app
 drop policy if exists "Permitir lectura publica animes" on public.animes;
 create policy "Permitir lectura publica animes"

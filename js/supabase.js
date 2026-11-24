@@ -60,12 +60,27 @@ window.AniVault = window.AniVault || {};
       if (!this.isConfigured()) {
         return { success: false, message: 'Faltan credenciales de Supabase (URL y Anon Key).' };
       }
+
+      // Detección proactiva de Secret Key (no permitida en navegadores)
+      if (this.key && this.key.startsWith('sb_secret_')) {
+        return {
+          success: false,
+          message: '⚠️ Has introducido una "Secret Key" (clave maestra privada). Por seguridad, Supabase prohíbe el uso de Secret Keys en el navegador web (error: "Forbidden use of secret API key in browser").\n\nSolución: En tu panel de Supabase ve a "Project Settings > API", busca la sección "Project API keys" y copia la clave "anon" o "publishable" (suele empezar por eyJhbGci... o sb_publishable_).'
+        };
+      }
+
       try {
         const { data, error } = await this.client.from('animes').select('id').limit(1);
         if (error) {
+          if (error.code === '42501' || (error.message && error.message.includes('permission denied'))) {
+            return {
+              success: false,
+              message: '⚠️ Error de permisos en la base de datos (PostgreSQL 42501): La tabla "animes" existe pero le faltan permisos para los roles de Supabase.\n\nSolución: Ve al "SQL Editor" de tu proyecto Supabase y ejecuta:\n\nGRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;\nGRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;\nGRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;'
+            };
+          }
           return { success: false, message: `Error de Supabase: ${error.message}` };
         }
-        return { success: true, message: '¡Conexión con Supabase establecida con éxito!' };
+        return { success: true, message: '¡Conexión con Supabase establecida con éxito! Tu catálogo ahora está vinculado con la nube.' };
       } catch (err) {
         return { success: false, message: `No se pudo conectar: ${err.message}` };
       }
