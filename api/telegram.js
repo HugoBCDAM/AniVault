@@ -110,7 +110,7 @@ export default async function handler(req, res) {
 
       let msg = `📚 *Tu Bóveda Anime (${animes.length} títulos):*\n\n`;
       animes.forEach((a, i) => {
-        const statusEmoji = a.status === 'airing' ? '🟢' : a.status === 'completed' ? '🔵' : '🟡';
+        const statusEmoji = a.status === 'airing' ? '🟢' : a.status === 'completed' ? '🔵' : a.status === 'dropped' ? '🔴' : '🟡';
         const favStar = a.favorite ? ' ⭐' : '';
         msg += `${i + 1}. ${statusEmoji} *${a.title}* (${a.rating}★)${favStar}\n`;
       });
