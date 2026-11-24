@@ -116,7 +116,12 @@ window.AniVault.views = window.AniVault.views || {};
 
               <button id="btn-sync-all-action" class="w-full py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-secondary text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-secondary/20 shadow-sm">
                 <span class="material-symbols-outlined text-[16px]">cloud_upload</span>
-                <span>Subir y Sincronizar Todo el Catálogo Ahora</span>
+                <span>Subir mi catálogo local a Supabase (sobreescribir nube)</span>
+              </button>
+
+              <button id="btn-pull-cloud-action" class="w-full py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-tertiary text-xs font-bold transition-all flex items-center justify-center gap-1.5 border border-tertiary/20 shadow-sm">
+                <span class="material-symbols-outlined text-[16px]">cloud_download</span>
+                <span>Descargar nube a este dispositivo (actualizar local)</span>
               </button>
             </div>
           </div>
@@ -279,20 +284,38 @@ window.AniVault.views = window.AniVault.views || {};
         };
       }
 
-      // Sincronizar catálogo
+      // Subir catálogo local → nube (push)
       const syncAllBtn = container.querySelector('#btn-sync-all-action');
       if (syncAllBtn && supabase) {
         syncAllBtn.onclick = async () => {
           syncAllBtn.disabled = true;
-          syncAllBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Sincronizando...';
-          const res = await supabase.syncAll(store.animes);
+          syncAllBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Subiendo...';
+          const res = await store.uploadToCloud();
           syncAllBtn.disabled = false;
-          syncAllBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">cloud_upload</span> <span>Subir y Sincronizar Todo el Catálogo Ahora</span>';
-          if (res.success) {
-            window.AniVault.ui.showToast('¡Catálogo sincronizado con Supabase Cloud! ☁️', 'success');
+          syncAllBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">cloud_upload</span> <span>Subir mi catálogo local a Supabase (sobreescribir nube)</span>';
+          if (res && res.success) {
+            window.AniVault.ui.showToast('☁️ Catálogo local subido a Supabase correctamente', 'success');
             this.render(container);
           } else {
-            window.AniVault.ui.showToast('Error al sincronizar: ' + res.message, 'error');
+            window.AniVault.ui.showToast('Error al subir: ' + ((res && res.message) || ''), 'error');
+          }
+        };
+      }
+
+      // Descargar nube → local (pull), el que debe usarse para actualizar este dispositivo
+      const pullCloudBtn = container.querySelector('#btn-pull-cloud-action');
+      if (pullCloudBtn && supabase) {
+        pullCloudBtn.onclick = async () => {
+          pullCloudBtn.disabled = true;
+          pullCloudBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Descargando...';
+          const res = await store.pullFromCloud();
+          pullCloudBtn.disabled = false;
+          pullCloudBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">cloud_download</span> <span>Descargar nube a este dispositivo (actualizar local)</span>';
+          if (res && res.success) {
+            window.AniVault.ui.showToast('✅ Dispositivo actualizado desde Supabase', 'success');
+            this.render(container);
+          } else {
+            window.AniVault.ui.showToast('Error al descargar: ' + ((res && res.message) || ''), 'error');
           }
         };
       }

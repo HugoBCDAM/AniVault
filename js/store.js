@@ -81,12 +81,34 @@ window.AniVault = window.AniVault || {};
       if (!supabase || !supabase.isConfigured()) return;
       try {
         const cloudAnimes = await supabase.fetchAllAnimes();
-        if (cloudAnimes && cloudAnimes.length > 0) {
+        // Siempre reemplazar con la versión de la nube, aunque esté vacía.
+        // Esto garantiza que si se borra algo en otro dispositivo, se propague aquí.
+        if (cloudAnimes !== null) {
           this.animes = cloudAnimes;
           this.saveLocal();
         }
       } catch (err) {
         console.warn('Sync background falló:', err);
+      }
+    }
+
+    // Descarga la nube y reemplaza el estado local — para "Sincronizar desde la nube"
+    async pullFromCloud() {
+      const supabase = window.AniVault.supabaseService;
+      if (!supabase || !supabase.isConfigured()) {
+        return { success: false, simulated: true };
+      }
+      try {
+        const cloudAnimes = await supabase.fetchAllAnimes();
+        if (cloudAnimes !== null) {
+          this.animes = cloudAnimes;
+          this.saveLocal();
+          this.notify();
+          return { success: true };
+        }
+        return { success: false, message: 'No se pudo obtener datos de Supabase.' };
+      } catch (err) {
+        return { success: false, message: err.message };
       }
     }
 
@@ -418,18 +440,27 @@ window.AniVault = window.AniVault || {};
       }
     }
 
+    // triggerSync ahora hace PULL (descarga nube → local) para que el botón 🔄
+    // en cualquier dispositivo traiga el estado real de Supabase, incluyendo borrados.
     async triggerSync() {
       const supabase = window.AniVault.supabaseService;
       if (supabase && supabase.isConfigured()) {
-        const res = await supabase.syncAll(this.animes);
-        this.notify();
-        return res;
+        return await this.pullFromCloud();
       } else {
         await new Promise(r => setTimeout(r, 600));
         this.user.lastSync = new Date().toISOString();
         this.saveLocal();
         return { success: true, simulated: true, timestamp: this.user.lastSync };
       }
+    }
+
+    // uploadToCloud: sube el catálogo local a Supabase (usado en Perfil → "Subir catálogo")
+    async uploadToCloud() {
+      const supabase = window.AniVault.supabaseService;
+      if (!supabase || !supabase.isConfigured()) {
+        return { success: false, message: 'Supabase no configurado.' };
+      }
+      return await supabase.syncAll(this.animes);
     }
   }
 

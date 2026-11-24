@@ -332,15 +332,21 @@ window.AniVault.views = window.AniVault.views || {};
         };
       }
 
-      // Botón forzar sincronización
+      // Botón forzar sincronización — ahora hace PULL (nube → local)
       const forceSyncBtn = container.querySelector('#btn-force-sync');
       if (forceSyncBtn) {
         forceSyncBtn.onclick = async () => {
           const icon = forceSyncBtn.querySelector('.material-symbols-outlined');
           if (icon) icon.classList.add('animate-spin');
-          const res = await store.triggerSync();
+          const res = await store.triggerSync(); // triggerSync ahora hace pull
           if (icon) icon.classList.remove('animate-spin');
-          window.showToast?.(res.simulated ? 'Sincronizado en almacenamiento local' : '¡Catálogo sincronizado con Supabase Cloud! ☁️');
+          if (res.simulated) {
+            window.AniVault.ui.showToast('Modo local: sin conexión a Supabase', 'info');
+          } else if (res.success) {
+            window.AniVault.ui.showToast('✅ Catálogo actualizado desde Supabase', 'success');
+          } else {
+            window.AniVault.ui.showToast('Error al sincronizar: ' + (res.message || ''), 'error');
+          }
           this.render(container);
         };
       }
