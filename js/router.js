@@ -76,6 +76,16 @@ window.AniVault.views = window.AniVault.views || {};
       }
     }
 
+    refreshCurrentView() {
+      if (!this.container) return;
+      if (this.currentPath !== 'biblioteca' && this.currentPath !== 'favoritos') return;
+      const views = window.AniVault.views;
+      const view = this.currentPath === 'favoritos' ? views.favorites : views.library;
+      if (view && typeof view.render === 'function') {
+        view.render(this.container);
+      }
+    }
+
     navigate(path, params = {}) {
       let query = '';
       const entries = Object.entries(params);

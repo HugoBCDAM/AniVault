@@ -171,10 +171,13 @@ window.AniVault.views = window.AniVault.views || {};
         const statusBadges = {
           'airing': { label: 'En emisión', bg: 'bg-secondary-container/20', text: 'text-secondary' },
           'completed': { label: 'Finalizada', bg: 'bg-tertiary-container/30', text: 'text-tertiary' },
-          'planning': { label: 'Pendiente', bg: 'bg-surface-container-highest', text: 'text-outline' },
+          'planning': { label: 'Pendiente', bg: 'bg-amber-400/15', text: 'text-amber-400' },
           'dropped': { label: 'Dropeada', bg: 'bg-error-container/30', text: 'text-error' }
         };
         const statusMeta = statusBadges[anime.status] || statusBadges.airing;
+        const extras = anime.movies || [];
+        const moviesCount = extras.filter(m => (m.type || 'movie') === 'movie').length;
+        const ovasCount = extras.filter(m => m.type === 'ova').length || anime.ovasCount || 0;
 
         return `
           <div class="anime-card relative bg-surface-container-low hover:bg-surface-container rounded-2xl p-3 border border-white/5 shadow-md hover:border-primary/20 transition-all group cursor-pointer overflow-hidden" data-id="${anime.id}">
@@ -203,8 +206,8 @@ window.AniVault.views = window.AniVault.views || {};
 
                   <div class="flex flex-wrap gap-1 mt-2">
                     <span class="bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded text-[10px] font-mono">${seasons.length} Temp.</span>
-                    <span class="bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded text-[10px] font-mono">${(anime.movies || []).length} Pelis</span>
-                    <span class="bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded text-[10px] font-mono">${anime.ovasCount || 0} OVAs</span>
+                    <span class="bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded text-[10px] font-mono">${moviesCount} Pelis</span>
+                    <span class="bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded text-[10px] font-mono">${ovasCount} OVAs</span>
                   </div>
                 </div>
 

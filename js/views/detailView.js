@@ -298,16 +298,21 @@ window.AniVault.views = window.AniVault.views || {};
           </div>
         `;
       }
-      return movies.map((m, mIdx) => `
+      return movies.map((m, mIdx) => {
+        const isOva = m.type === 'ova';
+        return `
         <div class="bg-surface-container-low rounded-2xl p-3 border border-white/5 shadow-md flex items-center justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
-            <div class="w-12 h-14 rounded-xl bg-surface-container-high flex flex-col items-center justify-center text-secondary shrink-0 border border-white/5">
-              <span class="material-symbols-outlined text-[20px]">theaters</span>
-              <span class="text-[9px] font-bold font-mono uppercase mt-0.5">${m.duration || 'FILM'}</span>
+            <div class="w-12 h-14 rounded-xl bg-surface-container-high flex flex-col items-center justify-center ${isOva ? 'text-primary' : 'text-secondary'} shrink-0 border border-white/5">
+              <span class="material-symbols-outlined text-[20px]">${isOva ? 'video_library' : 'theaters'}</span>
+              <span class="text-[9px] font-bold font-mono uppercase mt-0.5">${m.duration || (isOva ? 'OVA' : 'FILM')}</span>
             </div>
             <div class="flex flex-col min-w-0">
-              <h4 class="font-display font-bold text-sm text-on-surface truncate">${m.title}</h4>
-              <p class="text-xs text-on-surface-variant truncate">${m.synopsis || 'Película oficial vinculada'}</p>
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase shrink-0 ${isOva ? 'bg-primary/15 text-primary' : 'bg-secondary/15 text-secondary'}">${isOva ? 'OVA' : 'Película'}</span>
+                <h4 class="font-display font-bold text-sm text-on-surface truncate">${m.title}</h4>
+              </div>
+              <p class="text-xs text-on-surface-variant truncate">${m.synopsis || (isOva ? 'OVA / Especial vinculado' : 'Película oficial vinculada')}</p>
             </div>
           </div>
           <button data-movie-idx="${mIdx}" class="btn-toggle-movie px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all ${m.completed ? 'bg-tertiary-container/30 text-tertiary' : 'bg-surface-container-high text-on-surface-variant'}">
@@ -315,7 +320,8 @@ window.AniVault.views = window.AniVault.views || {};
             <span>${m.completed ? 'Visto' : 'Pendiente'}</span>
           </button>
         </div>
-      `).join('');
+      `;
+      }).join('');
     },
 
     // Micro-parche del DOM sin reconstruir la vista
@@ -516,23 +522,35 @@ window.AniVault.views = window.AniVault.views || {};
       };
       bindMovieToggles();
 
-      // 9. Vincular película modal
+      // 9. Vincular película u OVA modal
       const addMovieBtn = container.querySelector('#btn-add-movie-prompt');
       if (addMovieBtn) {
         addMovieBtn.onclick = () => {
           window.AniVault.ui.showModal({
             title: 'Vincular Película u OVA',
             inputs: [
+              {
+                id: 'movie-type-val',
+                label: 'Tipo',
+                type: 'select',
+                value: 'movie',
+                options: [
+                  { value: 'movie', label: 'Película' },
+                  { value: 'ova', label: 'OVA / Especial' }
+                ]
+              },
               { id: 'movie-title-val', label: 'Título de la película o especial', placeholder: 'Ej. Mugen Train' },
-              { id: 'movie-dur-val', label: 'Duración (opcional)', placeholder: 'Ej. 1h 55m' },
+              { id: 'movie-dur-val', label: 'Duración (opcional)', placeholder: 'Ej. 1h 55m / 24m' },
               { id: 'movie-syn-val', label: 'Sinopsis o descripción breve', placeholder: 'Ej. Continuación directa de T1' }
             ],
             confirmText: 'Vincular',
             onConfirm: async (data) => {
               if (!data['movie-title-val']) return;
+              const selectedType = data['movie-type-val'] === 'ova' ? 'ova' : 'movie';
               const updated = await store.addMovie(anime.id, {
+                type: selectedType,
                 title: data['movie-title-val'].trim(),
-                duration: data['movie-dur-val'] ? data['movie-dur-val'].trim() : '1h 30m',
+                duration: data['movie-dur-val'] ? data['movie-dur-val'].trim() : (selectedType === 'ova' ? '24m' : '1h 30m'),
                 synopsis: data['movie-syn-val'] ? data['movie-syn-val'].trim() : '',
                 completed: false
               });
@@ -545,7 +563,7 @@ window.AniVault.views = window.AniVault.views || {};
                   bindMovieToggles();
                 }
                 if (counter) counter.textContent = `${(updated.movies || []).length} vinculadas`;
-                window.AniVault.ui.showToast('Película vinculada correctamente', 'success');
+                window.AniVault.ui.showToast(selectedType === 'ova' ? 'OVA vinculada correctamente' : 'Película vinculada correctamente', 'success');
               }
             }
           });

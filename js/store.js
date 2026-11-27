@@ -86,6 +86,9 @@ window.AniVault = window.AniVault || {};
         if (cloudAnimes !== null) {
           this.animes = cloudAnimes;
           this.saveLocal();
+          if (window.AniVault.router && typeof window.AniVault.router.refreshCurrentView === 'function') {
+            window.AniVault.router.refreshCurrentView();
+          }
         }
       } catch (err) {
         console.warn('Sync background falló:', err);
@@ -139,9 +142,9 @@ window.AniVault = window.AniVault || {};
       // Filtro por formato
       if (format && format !== 'all') {
         if (format === 'movies') {
-          result = result.filter(a => a.movies && a.movies.length > 0);
+          result = result.filter(a => a.movies && a.movies.some(m => (m.type || 'movie') === 'movie'));
         } else if (format === 'ovas') {
-          result = result.filter(a => a.ovasCount && a.ovasCount > 0);
+          result = result.filter(a => (a.movies && a.movies.some(m => m.type === 'ova')) || (a.ovasCount && a.ovasCount > 0));
         }
       }
 
@@ -238,7 +241,7 @@ window.AniVault = window.AniVault || {};
 
       const supabase = window.AniVault.supabaseService;
       if (supabase && supabase.isConfigured()) {
-        supabase.deleteAnime(id);
+        await supabase.deleteAnime(id);
       }
     }
 
@@ -322,13 +325,16 @@ window.AniVault = window.AniVault || {};
       const anime = this.getAnimeById(id);
       if (!anime) return null;
       const movies = [...(anime.movies || [])];
+      const itemType = movieData.type === 'ova' ? 'ova' : 'movie';
       movies.push({
+        type: itemType,
         title: movieData.title,
-        duration: movieData.duration || '1h 45m',
+        duration: movieData.duration || (itemType === 'ova' ? '24m' : '1h 45m'),
         synopsis: movieData.synopsis || '',
         completed: Boolean(movieData.completed)
       });
-      return await this.updateAnime(id, { movies });
+      const ovasCount = movies.filter(m => m.type === 'ova').length;
+      return await this.updateAnime(id, { movies, ovasCount });
     }
 
     async toggleMovieStatus(id, movieIndex = 0) {

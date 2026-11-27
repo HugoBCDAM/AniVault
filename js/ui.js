@@ -84,21 +84,33 @@ window.AniVault = window.AniVault || {};
 
       let inputsHtml = '';
       if (inputs.length > 0) {
-        inputsHtml = inputs.map(input => `
-          <div class="flex flex-col gap-1 text-left">
-            <label class="text-[11px] font-bold text-outline uppercase" for="${input.id}">${input.label}</label>
-            <input 
-              id="${input.id}" 
-              type="${input.type || 'text'}" 
-              step="${input.step || ''}" 
-              min="${input.min || ''}" 
-              max="${input.max || ''}" 
-              value="${input.value !== undefined ? input.value : ''}" 
-              placeholder="${input.placeholder || ''}" 
-              class="w-full bg-surface-container px-3 py-2 rounded-xl text-xs text-on-surface border border-white/10 focus:outline-none focus:border-primary"
-            />
-          </div>
-        `).join('');
+        inputsHtml = inputs.map(input => {
+          if (input.type === 'select' && Array.isArray(input.options)) {
+            return `
+              <div class="flex flex-col gap-1 text-left">
+                <label class="text-[11px] font-bold text-outline uppercase" for="${input.id}">${input.label}</label>
+                <select id="${input.id}" class="w-full bg-surface-container px-3 py-2 rounded-xl text-xs text-on-surface border border-white/10 focus:outline-none focus:border-primary">
+                  ${input.options.map(opt => `<option value="${opt.value}" ${opt.value === input.value ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                </select>
+              </div>
+            `;
+          }
+          return `
+            <div class="flex flex-col gap-1 text-left">
+              <label class="text-[11px] font-bold text-outline uppercase" for="${input.id}">${input.label}</label>
+              <input 
+                id="${input.id}" 
+                type="${input.type || 'text'}" 
+                step="${input.step || ''}" 
+                min="${input.min || ''}" 
+                max="${input.max || ''}" 
+                value="${input.value !== undefined ? input.value : ''}" 
+                placeholder="${input.placeholder || ''}" 
+                class="w-full bg-surface-container px-3 py-2 rounded-xl text-xs text-on-surface border border-white/10 focus:outline-none focus:border-primary"
+              />
+            </div>
+          `;
+        }).join('');
       }
 
       this.modalContainer.innerHTML = `
